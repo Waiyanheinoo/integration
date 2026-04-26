@@ -1,31 +1,25 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import type { Task, Status, TaskFormData } from "./types/task";
-import { getTasks, createTask, updateTask, deleteTask } from "./api/tasks";
 import TaskColumn from "./components/TaskColumn";
 import TaskModal from "./components/TaskModal";
 import "./App.css";
+import {
+  createTaskRecord,
+  initialTasks,
+  updateTaskRecord,
+} from "./data/mockTasks";
 
 const STATUSES: Status[] = ["TODO", "IN_PROGRESS", "DONE"];
 
 export default function App() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(() =>
+    initialTasks.map((task) => ({ ...task })),
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(
     null,
   );
-
-  const load = useCallback(async () => {
-    try {
-      setTasks(await getTasks());
-    } catch {
-      showToast("Failed to load tasks", true);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   useEffect(() => {
     if (!toast) return;
@@ -54,31 +48,29 @@ export default function App() {
 
   async function handleSubmit(data: TaskFormData) {
     if (editing) {
-      await updateTask(editing.id, data);
+      const updatedTask = updateTaskRecord(editing, data);
+      setTasks((current) =>
+        current.map((task) => (task.id === editing.id ? updatedTask : task)),
+      );
       showToast("Task updated");
     } else {
-      await createTask(data);
+      const newTask = createTaskRecord(data);
+      setTasks((current) => [newTask, ...current]);
       showToast("Task created");
     }
     closeModal();
-    load();
   }
 
   async function handleDelete(id: string) {
-    try {
-      await deleteTask(id);
-      showToast("Task deleted");
-      load();
-    } catch {
-      showToast("Failed to delete task", true);
-    }
+    setTasks((current) => current.filter((task) => task.id !== id));
+    showToast("Task deleted");
   }
 
   return (
     <>
       <header>
         <h1>
-          Task Manager <span>/ Prisma + Axios</span>
+          Task Manager <span>/ Mock Frontend Data</span>
         </h1>
         <button className="btn btn-primary" onClick={openCreate}>
           + New Task

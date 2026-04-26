@@ -12,6 +12,9 @@ app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(router);
+app.get("/", (req, res) => {
+  res.send("Server is running 🚀");
+});
 
 app.listen(PORT, () => {
   console.log("Server is running on http://localhost:%d", PORT);
